@@ -1,0 +1,151 @@
+using Microsoft.AspNetCore.Mvc;
+using RpgApi.Models;
+using RpgApi.Models.Enums;
+
+namespace RpgApi.Controllers
+{
+    [ApiController]
+    [Route("[Controller]")]
+
+    public class PersonagensController : ControllerBase
+    {
+
+        //Ccriar uma lista de Personagens, do tipo personagem.
+        private static List<Personagem> personagens = new List<Personagem>()
+        {
+            new Personagem() { Id = 1, Nome = "Frodo", PontosVida = 100, Forca = 17, Defesa = 23, Inteligencia = 33, Classe = ClasseEnum.Cavaleiro},
+            new Personagem() { Id = 2, Nome = "Sam", PontosVida = 100, Forca = 15, Defesa = 25, Inteligencia = 30, Classe = ClasseEnum.Cavaleiro},
+            new Personagem() { Id = 3, Nome = "Galadriel", PontosVida = 100, Forca = 18, Defesa = 21, Inteligencia = 35, Classe = ClasseEnum.Clerigo},
+            new Personagem() { Id = 4, Nome = "Gandalf", PontosVida = 100, Forca = 18, Defesa = 18, Inteligencia = 32, Classe = ClasseEnum.Mago},
+            new Personagem() { Id = 5, Nome = "Hobbit", PontosVida = 100, Forca = 20, Defesa = 17, Inteligencia = 31, Classe = ClasseEnum.Cavaleiro},
+            new Personagem() { Id = 6, Nome = "Celdron", PontosVida = 100, Forca = 21, Defesa = 13, Inteligencia = 34, Classe = ClasseEnum.Clerigo},
+            new Personagem() { Id = 7, Nome = "Radagast", PontosVida = 100, Forca = 25, Defesa = 11, Inteligencia = 35, Classe = ClasseEnum.Mago},
+        };
+
+        //Criar o primeiro método GET para retornar o personagem de index [0]
+        [HttpGet("Get")]
+        public IActionResult GetFirst()
+        {
+            return Ok(personagens[0]);
+        }
+
+
+        //Criar um método GET que retorne toda a lista de Personagens, esta lista virá em Formato Json.
+        // Testar os métodos criados no Postman.
+        [HttpGet("GetAll")]
+        public IActionResult Get()
+        {
+            return Ok(personagens);
+        }
+
+        [HttpGet("{id}")]
+        public IActionResult GetSingle(int id)
+        {
+            return Ok(personagens.FirstOrDefault(pe => pe.Id == id));
+        }
+
+
+        [HttpPost]
+        public IActionResult AddPersonagem(Personagem novoPersonagem)
+        {
+            //if (novoPersonagem.Inteligencia <= 0)
+            //    return BadRequest("Inteligência não pode ser menos ou igual a ZERO.");
+            personagens.Add(novoPersonagem);
+            return Ok(personagens);
+        }
+
+
+
+
+        //Aula dia 26/02 - Início 3A GB
+        [HttpGet("GetOrdenado")]
+        public IActionResult GetOrdem()
+        {
+            List<Personagem> listaFinal = personagens.OrderBy(pe => pe.Forca).ToList();
+            return Ok(listaFinal);
+        }
+
+
+        [HttpGet("GetContagem")]
+        public IActionResult GetQuantidade()
+        {
+            return Ok("Quantidade de Personagens - " + personagens.Count);
+        }
+
+
+        [HttpGet("GetSomaForca")]
+        public IActionResult GetSomaForca()
+        {
+            return Ok(personagens.Sum(pe => pe.Forca));
+        }
+
+        [HttpGet("GetSemCavaleiro")]
+        public IActionResult GetSemCavaleiro()
+        {
+            List<Personagem> listaBusca = personagens.FindAll(pe => pe.Classe != ClasseEnum.Cavaleiro);
+            return Ok(listaBusca);
+        }
+
+        [HttpGet("GetNomeAproximado/{nome}")]
+        public IActionResult GetNomeAproximado(string nome)
+        {
+            List<Personagem> listaBusca = personagens.FindAll(pe => pe.Nome.Contains(nome));
+            return Ok(listaBusca);
+        }
+
+        [HttpGet("GetByForca/{forca}")]
+        public IActionResult GetByForca(int forca)
+        {
+            List<Personagem> listaFinal = personagens.FindAll(pe => pe.Forca == forca);
+            return Ok(listaFinal);
+        }
+        //Fim da aula 26/02/2025 - 3A - GB
+
+        [HttpGet("GetRemovendoMago")]
+        public IActionResult GetRemovendoMagos()
+        {
+            Personagem pRemove = personagens.Find(pe => pe.Classe == ClasseEnum.Mago);
+            personagens.Remove(pRemove);
+            return Ok("Personagem removido: " + pRemove.Nome);
+        }
+
+
+        //Aqui daremos início ao Método PUT, usado para atualizar um personagem da lista
+
+        [HttpPut]
+        public IActionResult UpdatePersonagem(Personagem p)
+        {
+            Personagem personagemAlterado = personagens.Find(pa => pa.Id == p.Id);
+
+            personagemAlterado.Nome = p.Nome;
+            personagemAlterado.PontosVida = p.PontosVida;
+            personagemAlterado.Forca = p.Forca;
+            personagemAlterado.Defesa = p.Defesa;
+            personagemAlterado.Inteligencia = p.Inteligencia;
+            personagemAlterado.Classe = p.Classe;
+
+            return Ok(personagens[p.Id - 1]);
+        }
+
+        [HttpDelete("{id}")]
+        public IActionResult Delete(int id)
+        {
+            personagens.RemoveAll(pd => pd.Id == id);
+            return Ok(personagens);
+        }
+
+        //Exemplo de filtragem em lista através de um ENUM.
+        /* Exemplo do Postman:
+        http://localhost:<port>/Personagens/GetByEnum/2
+        */
+        [HttpGet("GetByEnum/{enumId}")]
+        public IActionResult GetByEnum(int enumId)
+        {
+            //Conversão explicita de int para enum
+            ClasseEnum enumDigitado = (ClasseEnum)enumId;
+            List<Personagem> listaBusca = personagens.FindAll(pe => pe.Classe == enumDigitado);
+
+            return Ok(listaBusca);
+        }
+    }
+};
