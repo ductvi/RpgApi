@@ -4,6 +4,8 @@ API REST feita com .NET 9 usando padrão MVC, para gerenciar personagens, armas 
 Testada com Postman e hospedada no Somee.
 
 🚧 Em desenvolvimento 🚧
+- Sorteio Aleatório das Habilidades.
+- Criação do Front-End para ver as batalhas entre personagens.
 
 ---
 
@@ -23,6 +25,8 @@ Testada com Postman e hospedada no Somee.
 - 🧝‍♂️ CRUD de Personagens
 - ⚔️ CRUD de Armas
 - 👤 CRUD de Usuários
+- 🔐 Criptografia e autenticação 
+- 🖇 Conexão com Habilidades Especiais e Personagens
 
 ---
 
