@@ -1,127 +1,123 @@
-//Eduardo Custódio Vieira
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using RpgApi.Data;
 using RpgApi.Models;
+using Microsoft.EntityFrameworkCore;
 namespace RpgApi.Controllers
 {
-    [ApiController] // Indica que esta classe é um controlador de API.
-    [Route("[Controller]")] // Define a rota base para os endpoints deste controlador.
+    [ApiController]
+    [Route("[Controller]")]
 
-    public class UsuariosController : ControllerBase // Define a classe do controlador que herda de ControllerBase.
+    public class UsuariosController : ControllerBase
     {
-        private readonly DataContext _userContext; // Declara uma variável para acessar o contexto do banco de dados.
+        private readonly DataContext _userContext;
 
-        public UsuariosController(DataContext userContext) // Construtor que recebe o contexto do banco de dados como dependência.
+        public UsuariosController(DataContext userContext)
         {
-            _userContext = userContext; // Inicializa o contexto do banco de dados.
+            _userContext = userContext;
         }
 
-        public async Task<bool> UsuarioExistente(string username) // Método para verificar se um usuário já existe no banco de dados.
+        public async Task<bool> UsuarioExistente(string username)
         {
-            if (await _userContext.Usuarios.AnyAsync(x => x.Username.ToLower() == username.ToLower())) // Verifica se existe algum usuário com o mesmo nome (case insensitive).
+            if (await _userContext.Usuarios.AnyAsync(x => x.Username.ToLower() == username.ToLower()))
             {
-                return true; // Retorna verdadeiro se o usuário existir.
+                return true;
             }
-            return false; // Retorna falso se o usuário não existir.
+            return false;
         }
 
-        [HttpPost("Registrar")] // Define o endpoint POST para registrar um novo usuário.
-
-        public async Task<IActionResult> RegistrarUsuario(Usuario user) // Método para registrar um novo usuário.
+        [HttpPost("Registrar")]
+        public async Task<IActionResult> RegistrarUsuario(Usuario user)
         {
             try
             {
-                if (await UsuarioExistente(user.Username)) // Verifica se o nome de usuário já existe.
-                    throw new Exception("Nome de Usuário já existente!"); // Lança uma exceção se o nome de usuário já existir.
+                if (await UsuarioExistente(user.Username))
+                    throw new Exception("Nome de usuário já existente!");
 
-                Criptografia.CriarPasswordHash(user.PasswordString, out byte[] hash, out byte[] salt); // Gera o hash e o salt da senha.
-                user.PasswordHash = hash; // Define o hash da senha no objeto do usuário.
-                user.PasswordSalt = salt; // Define o salt da senha no objeto do usuário.
-
-                await _userContext.AddAsync(user); // Adiciona o usuário ao banco de dados.
-                await _userContext.SaveChangesAsync(); // Salva as alterações no banco de dados.
-                return Ok(user.Id); // Retorna o ID do usuário registrado.
+                Criptografia.CriarPasswordHash(user.PasswordString, out byte[] hash, out byte[] salt);
+                user.PasswordHash = hash;
+                user.PasswordSalt = salt;
+                await _userContext.AddAsync(user);
+                await _userContext.SaveChangesAsync();
+                return Ok(user.Id);
             }
             catch (Exception ex)
             {
-                return BadRequest(ex.Message); // Retorna uma mensagem de erro em caso de exceção.
+                return BadRequest(ex.Message);
             }
         }
 
-        [HttpPost("Autenticar")] // Define o endpoint POST para autenticar um usuário.
-
-        public async Task<IActionResult> AutenticarUsuario(Usuario credenciais) // Método para autenticar um usuário.
+        [HttpPost("Autenticar")]
+        public async Task<IActionResult> AutenticarUsuario(Usuario credenciais)
         {
             try
             {
-                Usuario? usuario = await _userContext.Usuarios.FirstOrDefaultAsync(u => u.Username.ToLower() == credenciais.Username.ToLower()); // Busca o usuário pelo nome de usuário.
+                Usuario? usuario = await _userContext.Usuarios.FirstOrDefaultAsync(u => u.Username.ToLower().Equals(credenciais.Username.ToLower()));
 
-                if (usuario == null) // Verifica se o usuário não foi encontrado.
+                if (usuario == null)
                 {
-                    throw new Exception("Usuário não Encontrado."); // Lança uma exceção se o usuário não existir.
+                    throw new Exception("Usuário não encontrado.");
                 }
-                else if (!Criptografia.VerificarPasswordHash(credenciais.PasswordString, usuario.PasswordHash, usuario.PasswordSalt)) // Verifica se a senha está incorreta.
+                else if (!Criptografia.VerificarPasswordHash(credenciais.PasswordString, usuario.PasswordHash, usuario.PasswordSalt))
                 {
-                    throw new Exception("Senha incorreta, tente novamente"); // Lança uma exceção se a senha estiver incorreta.
+                    throw new Exception("Senha incorreta, tente novamente");
                 }
                 else
                 {
-                    usuario.DataAcesso = DateTime.UtcNow; // Atualiza a data de acesso do usuário.
-                    _userContext.Usuarios.Update(usuario); // Atualiza o usuário no banco de dados.
-                    await _userContext.SaveChangesAsync(); // Salva as alterações no banco de dados.
-                    return Ok(usuario.Id); // Retorna o ID do usuário autenticado.
+                    usuario.DataAcesso = DateTime.Now;
+                    _userContext.Usuarios.Update(usuario);
+                    await _userContext.SaveChangesAsync();
+                    return Ok(usuario.Id);
                 }
             }
             catch (Exception ex)
             {
-                return BadRequest(ex.Message); // Retorna uma mensagem de erro em caso de exceção.
+                return BadRequest(ex.Message);
             }
         }
 
-        [HttpPut("AlterarSenha")] // Define o endpoint PUT para alterar a senha de um usuário.
-
-        public async Task<IActionResult> Update(Usuario modSenha) // Método para alterar a senha de um usuário.
+        [HttpPut("AlterarSenha")]
+        public async Task<IActionResult> AlterarSenhaUsuario(Usuario credenciais)
         {
             try
             {
-                Usuario? usuario = await _userContext.Usuarios.FirstOrDefaultAsync(u => u.Username.ToLower() == modSenha.Username.ToLower()); // Busca o usuário pelo nome de usuário.
-
-                if (usuario == null) // Verifica se o usuário não foi encontrado.
-                {
-                    throw new Exception("Usuário não Encontrado."); // Lança uma exceção se o usuário não existir.
+                //Aqui vamos programar o método para alterar a senha do usuário
+                Usuario? usuario = await _userContext.Usuarios.FirstOrDefaultAsync(u => u.Username.ToLower().Equals(credenciais.Username.ToLower()));
+                if(usuario == null){
+                    throw new Exception("Usuário não encontrado.");
                 }
-                else
-                {
-                    Criptografia.CriarPasswordHash(modSenha.PasswordString, out byte[] hash, out byte[] salt); // Gera o hash e o salt da nova senha.
-                    usuario.PasswordHash = hash; // Atualiza o hash da senha no objeto do usuário.
-                    usuario.PasswordSalt = salt; // Atualiza o salt da senha no objeto do usuário.
 
-                    _userContext.Usuarios.Update(usuario); // Atualiza o usuário no banco de dados.
-                    await _userContext.SaveChangesAsync(); // Salva as alterações no banco de dados.
+                Criptografia.CriarPasswordHash(credenciais.PasswordString, out byte[] hash, out byte[] salt);
+                usuario.PasswordHash = hash;
+                usuario.PasswordSalt = salt;
 
-                    return Ok("Senha atualizada com sucesso!"); // Retorna uma mensagem de sucesso.
-                }
-            }
-            catch
-            {
-                return BadRequest("Erro ao atualizar a senha."); // Retorna uma mensagem de erro em caso de exceção.
-            }
-        }
+                _userContext.Usuarios.Update(usuario);
+                int linhasAfetadas = await _userContext.SaveChangesAsync();
 
-        [HttpGet("GetAll")] // Define o endpoint GET para obter todos os usuários.
-
-        public async Task<IActionResult> GetAllUsuarios() // Método para obter todos os usuários.
-        {
-            try
-            {
-                var usuarios = await _userContext.Usuarios.ToListAsync(); // Obtém todos os usuários do banco de dados.
-                return Ok(usuarios); // Retorna a lista de usuários.
+                return Ok(linhasAfetadas);
             }
             catch (Exception ex)
             {
-                return BadRequest("Erro ao listar os usuários: " + ex.Message); // Retorna uma mensagem de erro em caso de exceção.
+                return BadRequest(ex.Message);
             }
         }
+
+        [HttpGet("GetAll")]
+        public async Task<IActionResult> GetUsuarios()
+        {
+            try
+            {
+                //Aqui vamos programar o método para buscar todos os usuários do sistema.
+                List<Usuario> usuarios = await _userContext.Usuarios.ToListAsync();
+                return Ok(usuarios);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        } 
     }
 }
+
+
+
+

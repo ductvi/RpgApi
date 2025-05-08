@@ -7,27 +7,22 @@ namespace RpgApi.Controllers
 {
     [ApiController]
     [Route("[Controller]")]
-    public class ArmasController : ControllerBase
+    public class ArmasController: ControllerBase
     {
-        private readonly DataContext _context; // Declaração do Atributo.
+        private readonly DataContext _dataContext;
 
-        public ArmasController(DataContext context)
+        public ArmasController(DataContext dataContext)
         {
-            _context = context; // Inicializando o atributo a partir de um parâmetro.
+            _dataContext = dataContext;
         }
 
-        // Método GET por id da arma
         [HttpGet("{id}")]
         public async Task<IActionResult> GetSingle(int id)
         {
             try
             {
-                Arma arma = await _context.Armas.FirstOrDefaultAsync(a => a.Id == id);
-                if (arma == null)
-                {
-                    return NotFound("Arma não encontrada.");
-                }
-                return Ok(arma);
+                Arma? a = await _dataContext.Armas.FirstOrDefaultAsync(aBusca => aBusca.Id == id);
+                return Ok(a);
             }
             catch (Exception ex)
             {
@@ -35,58 +30,58 @@ namespace RpgApi.Controllers
             }
         }
 
-        // Método GET para listar todas as armas
         [HttpGet("GetAll")]
-        public async Task<IActionResult> GetAll()
+        public async Task<IActionResult> Get()
         {
             try
             {
-                List<Arma> listaArmas = await _context.Armas.ToListAsync();
-                return Ok(listaArmas);
+                List<Arma> lista = await _dataContext.Armas.ToListAsync();
+                return Ok(lista);
             }
             catch (Exception ex)
             {
                 return BadRequest(ex.Message);
+                
             }
         }
 
-        // Método POST para adicionar uma nova arma
         [HttpPost]
         public async Task<IActionResult> Add(Arma novaArma)
         {
             try
             {
-                if (novaArma.Dano <= 0)
+                if(novaArma.Dano <= 0)
                 {
-                    throw new Exception("O dano da arma deve ser maior que 0.");
+                    throw new Exception("Uma Arma não pode ter Dano Zerado.");
                 }
 
-                await _context.Armas.AddAsync(novaArma);
-                await _context.SaveChangesAsync();
+                Personagem? p = await _dataContext.Personagens.FirstOrDefaultAsync(p => p.Id == novaArma.PersonagemId);
+                if(p == null){
+                    throw new Exception("Não existe o Personagem indicado com Id=" + novaArma.PersonagemId);
+                }   
 
-                return Ok(novaArma.Id);
+                await _dataContext.Armas.AddAsync(novaArma);
+                await _dataContext.SaveChangesAsync();
+                return Ok(novaArma);
             }
             catch (Exception ex)
-            {
+            {                
                 return BadRequest(ex.Message);
             }
         }
 
-        // Método PUT para atualizar uma arma
         [HttpPut]
-        public async Task<IActionResult> Update(Arma armaModificada)
+        public async Task<IActionResult> Update(Arma modArma)
         {
             try
             {
-                if (armaModificada.Dano <= 0)
+                if(modArma.Dano <= 0 || modArma.Dano > 50)
                 {
-                    throw new Exception("O dano da arma deve ser maior que 0.");
+                    throw new Exception("O valor do Dano deverá ser > 0 (zero) <= 50!!"); 
                 }
-
-                _context.Armas.Update(armaModificada);
-                int linhasAfetadas = await _context.SaveChangesAsync();
-
-                return Ok(linhasAfetadas);
+                _dataContext.Armas.Update(modArma);
+                int armasAfetadas = await _dataContext.SaveChangesAsync();
+                return Ok(armasAfetadas);  
             }
             catch (Exception ex)
             {
@@ -94,27 +89,26 @@ namespace RpgApi.Controllers
             }
         }
 
-        // Método DELETE para excluir uma arma
         [HttpDelete("{id}")]
+
         public async Task<IActionResult> Delete(int id)
         {
             try
             {
-                Arma armaParaRemover = await _context.Armas.FirstOrDefaultAsync(a => a.Id == id);
-                if (armaParaRemover == null)
-                {
-                    return NotFound("Arma não encontrada.");
-                }
+                Arma? aRemover = await _dataContext.Armas.FirstOrDefaultAsync(ar => ar.Id == id);
 
-                _context.Armas.Remove(armaParaRemover);
-                int linhasAfetadas = await _context.SaveChangesAsync();
-
-                return Ok(linhasAfetadas);
+                _dataContext.Armas.Remove(aRemover);
+                int armasRemovidas = await _dataContext.SaveChangesAsync();
+                return Ok(armasRemovidas);
             }
             catch (Exception ex)
             {
                 return BadRequest(ex.Message);
             }
         }
+
+
+        
     }
-}
+    
+};

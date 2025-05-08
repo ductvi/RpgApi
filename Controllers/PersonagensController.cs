@@ -21,14 +21,18 @@ namespace RpgApi.Controllers
             _context = context;
         }
         //Início dos métodos:
-        //Método GET por id do personagem.
-
+        //Método GET por id do personagem. Este método foi modificado para exibir os personagens que pertencem ao usuário.
         [HttpGet("{id}")]
         public async Task<IActionResult> GetSingle(int id)
         {
             try
             {
-                Personagem p = await _context.Personagens.FirstOrDefaultAsync(pBusca => pBusca.Id == id);
+                Personagem? p = await _context.Personagens
+                    .Include(ar => ar.Arma)//Inclui na propriedade a Arma do Objeto p
+                    .Include(us => us.Usuario)//Inclui na propriedade o Usuário do Objeto p
+                    .Include(ph => ph.PersonagemHabilidades)
+                        .ThenInclude(h => h.Habilidade)//Inclui na lista de PersonagemHabilidades de ph*/
+                    .FirstOrDefaultAsync(pBusca => pBusca.Id == id);
                 return Ok(p);
             }
             catch (Exception ex)
@@ -95,7 +99,7 @@ namespace RpgApi.Controllers
         {
             try
             {
-                Personagem pRemover = await _context.Personagens.FirstOrDefaultAsync(p => p.Id == id);
+                Personagem? pRemover = await _context.Personagens.FirstOrDefaultAsync(p => p.Id == id);
 
                 _context.Personagens.Remove(pRemover);
                 int linhasAfetadas = await _context.SaveChangesAsync();
